@@ -29,6 +29,7 @@
 # -midpoint
 # -number of contours
 
+import argparse
 import csv
 from datetime import datetime
 import logging
@@ -36,23 +37,6 @@ from networktables import NetworkTables
 import os
 import sys
 import time
-
-# False after the first time NetworkTables connects
-first_connect = True
-# Directory the log files are stored in
-log_dir = 'logs/'
-# True when data is received for the first time
-data_received = False
-# Time since
-downtime = time.time()
-# True when headers have been created in the logfile
-headers = False
-# number of dots for the stylish printer function
-num_dots = 0
-# Time to wait before restarting, in seconds
-wait_time = 15
-# Variable to monitor for changes
-watched_var = 'time'
 
 
 # Is run when connected or disconnected from NetworkTables server
@@ -130,16 +114,35 @@ def get_logfile_path():
 
 if __name__ == '__main__':
 
-    print('Starting SharkLogger...')
-    print('===========================================================')
+    first_connect = True
+    data_received = False
+    downtime = time.time()
+    headers = False
 
     logging.basicConfig(level=logging.ERROR)
 
-    # For actual robot
-    NetworkTables.initialize(server='roboRIO-226-FRC.local')
+    # Handle command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-ip', help='The IP to initialize NetworkTables on', default='roboRIO-226-FRC.local', type=str)
+    parser.add_argument('-ld', '--logdir', help='Directory that log files are stored in', default='logs/', type=str)
+    parser.add_argument('-wt', '--waittime', help='Time to wait before timing out', default=15, type=int)
+    parser.add_argument('-wv', '--watchedvar', help='Variable to monitor for changes', default='time', type=str)
+    parser.add_argument('-or', '--onerun', help='Program will exit instead of restarting after it times out',
+                        action='store_true', default=False)
+    args = parser.parse_args()
+    ip = args.ip
+    if args.logdir[-1:] != '/':
+        args.logdir += '/'
+    log_dir = args.logdir
+    wait_time = args.waittime
+    watched_var = args.watchedvar
+    one_run = args.onerun
 
-    # For testing
-    # NetworkTables.initialize(server='127.0.0.1')
+    print('Starting SharkLogger...')
+    print('===========================================================')
+
+    NetworkTables.initialize(server=ip)
+    print('NetworkTables initialized on:', ip)
 
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -192,8 +195,12 @@ if __name__ == '__main__':
                     print('Waiting...', wait_time - get_downtime())
                     if get_downtime() >= wait_time:
                         logfile.close()
-                        print('TIMED OUT')
-                        break
+                        if one_run:
+                            print('EXITING')
+                            exit(0)
+                        else:
+                            print('TIMED OUT')
+                            break
                     time.sleep(1)
                 break
             # Run when connected to table
