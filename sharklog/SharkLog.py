@@ -1,33 +1,4 @@
 #!/usr/bin/env python3
-# Data to be logged:
-# System
-# -Battery voltage
-# -Comms loss
-# -Time
-# Drivetrain
-# -L/R encoder counts
-# -Average encoder count
-# -Voltage of all Talons
-# Shooters
-# -RPMs
-# -PID output
-# -PID enabled
-# -PID setpoint
-# -Voltage of all Talons
-# Feeders
-# -RPMs
-# -PID output
-# -PID enabled
-# -PID setpoint
-# -Voltage of all Talons
-# Climber/Intake
-# -Voltage of all Talons
-# Vision
-# -centerX
-# -lambda
-# -delta
-# -midpoint
-# -number of contours
 
 import argparse
 import csv
